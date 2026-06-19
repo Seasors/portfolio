@@ -1,0 +1,42 @@
+# 1. Centralized State Management to prevent configuration drift
+terraform {
+  backend "s3" {
+    bucket         = "company-terraform-state-backend"
+    key            = "production/infrastructure.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-locks" # Prevents simultaneous runs
+    encrypt        = true
+  }
+}
+
+# 2. Provider Configurations
+provider "aws" {
+  region = var.aws_region
+}
+
+# 3. Consuming Reusable Network Module (VPC)
+module "production_network" {
+  source = "git::https://github.com/your-org/terraform-modules.git//vpc?ref=v1.2.0"
+
+  environment = "production"
+  vpc_cidr    = "10.0.0.0/16"
+  azs         = ["us-east-1a", "us-east-1b", "us-east-1c"]
+}
+
+# 4. Consuming Reusable Security Module (IAM Roles)
+module "production_security" {
+  source = "git::https://github.com/your-org/terraform-modules.git//iam-roles?ref=v1.1.0"
+
+  environment           = "production"
+  enable_eks_admin_role = true
+}
+
+# 5. Consuming Reusable Compute Module (EKS)
+module "production_compute" {
+  source = "git::https://github.com/your-org/terraform-modules.git//eks?ref=v2.0.0"
+
+  cluster_name    = "prod-eks-cluster"
+  vpc_id          = module.production_network.vpc_id
+  subnet_ids      = module.production_network.private_subnets
+  admin_role_arn  = module.production_security.eks_admin_role_arn
+}
