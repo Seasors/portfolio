@@ -1,0 +1,44 @@
+The Version Control & Automation Layer (The Trigger)Source of Truth: All infrastructure configurations are stored in a Git repository (like GitHub or GitLab).  CI/CD Pipeline: Instead of applying code locally, pipelines automatically run terraform plan on every pull request, and terraform apply on merge. This enforces peer review and eliminates manual provisioning steps.  
+
+The Modular Core (The Building Blocks)To achieve that 25% improvement in environment consistency, the architecture relies on standardized templates rather than hard-coded scripts.  Network Module: A reusable VPC configuration that guarantees every environment has the exact same subnet, NAT gateway, and route table structure.  Compute Module: Standardized EKS cluster setups, enforcing the same logging and node group defaults across the board.  Security Module: Reusable IAM roles and policies to ensure least privilege access without having to rewrite JSON policies every time.  
+
+State & Drift Management Layer (The Anchor)This is the specific mechanism that solves the "configuration drift" problem you highlighted.  Remote State Backend (AWS S3 / Azure Blob): Stores the terraform.tfstate file centrally so the entire team works from the exact same mapping of reality.State Locking (DynamoDB): Prevents two engineers (or pipelines) from running deployments at the same time, avoiding state corruption.Drift Detection: Scheduled CI/CD runs check the remote state against the actual live cloud environment to catch unauthorized manual changes instantly.
+
+Multi-Cloud Targets (The Destinations)The modular engine is designed to seamlessly target both AWS and Azure environments based on provider blocks, allowing for flexible cloud application development and deployment. 
+
+flowchart TD
+
+    Dev([DevOps Engineer])
+    Git[Git Repository / Version Control]
+    CI[CI/CD Automation Pipeline]
+    
+    subgraph Engine [Terraform IaC Engine]
+        State[(Remote State Backend\nS3 / Blob)]
+        Lock[State Locking\nDynamoDB]
+        
+        subgraph Modules [Reusable Modules]
+            VPC[Network: VPC Module]
+            EKS[Compute: EKS Module]
+            IAM[Security: IAM Roles Module]
+        end
+    end
+    
+    subgraph Cloud
+        AWS((AWS Environment))
+        Azure((Azure Environment))
+    end
+
+    Dev -- "1. Push IaC Code" --> Git
+    Git -- "2. Trigger Pipeline" --> CI
+    CI -- "3. Plan & Apply" --> Modules
+    
+    Modules -- "Read/Write" --> State
+    State -- "Acquire Lock" --> Lock
+    
+    Modules -- "4. Provision Resources" --> AWS
+    Modules -- "4. Provision Resources" --> Azure
+    
+    classDef target fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:white;
+    classDef module fill:#0f172a,stroke:#10b981,stroke-width:2px,color:white;
+    class AWS,Azure target;
+    class VPC,EKS,IAM module;
