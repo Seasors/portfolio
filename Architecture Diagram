@@ -1,4 +1,4 @@
-Kubernetes High Availability and Auto-Scaling architecture:
+Kubernetes High Availability and Auto-Scaling architecture (Project 1):
 
 * **Traffic Routing & Networking:** Amazon Route 53 and an AWS Application Load Balancer (ALB) securely distribute incoming user traffic across a Multi-AZ Virtual Private Cloud (VPC).
 * **Compute Layer:** An Amazon EKS Control Plane manages distributed EC2 worker nodes across multiple Availability Zones to ensure underlying hardware resilience.
