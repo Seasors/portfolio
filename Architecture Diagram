@@ -1,0 +1,49 @@
+flowchart TD
+    User([End User / Traffic])
+    DNS[Amazon Route 53]
+    ALB[AWS Application Load Balancer]
+    
+    subgraph AWS Cloud [AWS Cloud - Multi-AZ]
+        subgraph EKS [Amazon EKS Cluster]
+            CP[EKS Control Plane]
+            
+            subgraph AutoScaling [Scaling Mechanisms]
+                HPA[Horizontal Pod Autoscaler]
+                Metrics[Metrics Server]
+                CA[Cluster Autoscaler]
+            end
+            
+            subgraph AZ1 [Availability Zone A]
+                Node1[Worker Node 1]
+                Pod1[App Pod]
+                Pod2[App Pod]
+            end
+            
+            subgraph AZ2 [Availability Zone B]
+                Node2[Worker Node 2]
+                Pod3[App Pod]
+                Pod4[App Pod]
+            end
+        end
+        
+        CW[CloudWatch Container Insights]
+    end
+
+    User --> DNS
+    DNS --> ALB
+    ALB --> Node1
+    ALB --> Node2
+    Node1 --- Pod1 & Pod2
+    Node2 --- Pod3 & Pod4
+    
+    Pod1 & Pod2 & Pod3 & Pod4 -. CPU/Memory .-> Metrics
+    Metrics -. Feed Data .-> HPA
+    HPA -. Scale Pods .-> CP
+    CP -. Provision Nodes .-> CA
+    
+    EKS -. Logs & Metrics .-> CW
+    
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black;
+    classDef k8s fill:#326CE5,stroke:#fff,stroke-width:2px,color:white;
+    class EKS,CP k8s;
+    class ALB,DNS,CA,CW aws;
