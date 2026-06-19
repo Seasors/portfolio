@@ -1,3 +1,15 @@
+Kubernetes High Availability and Auto-Scaling architecture:
+
+* **Traffic Routing & Networking:** Amazon Route 53 and an AWS Application Load Balancer (ALB) securely distribute incoming user traffic across a Multi-AZ Virtual Private Cloud (VPC).
+* **Compute Layer:** An Amazon EKS Control Plane manages distributed EC2 worker nodes across multiple Availability Zones to ensure underlying hardware resilience.
+* **Automated Scaling:** A Horizontal Pod Autoscaler (HPA) automatically spins up new pod replicas during traffic spikes to eliminate manual firefighting. If pod capacity exceeds node availability, the Cluster Autoscaler provisions new EC2 instances.
+
+
+* **Zero-Downtime Deployments:** Rolling update strategies and automated readiness checks ensure old pods are only terminated after new code is verified as healthy, significantly reducing rollback incidents.
+
+
+* **Proactive Observability:** CloudWatch Container Insights and Splunk continuously aggregate cluster logs and metrics to monitor system health and drive automated scaling responses.
+
 flowchart TD
     User([End User / Traffic])
     DNS[Amazon Route 53]
